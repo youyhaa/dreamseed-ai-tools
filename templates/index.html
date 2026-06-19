@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamSeed AI Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #1d1d1f; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 40px 0; }
+        header h1 { font-size: 2.5em; font-weight: 700; margin-bottom: 10px; }
+        header p { color: #86868b; font-size: 1.2em; }
+        .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 40px; }
+        .tool-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; }
+        .tool-card:hover { transform: translateY(-4px); }
+        .tool-card h3 { font-size: 1.3em; margin-bottom: 12px; }
+        .tool-card p { color: #6e6e73; line-height: 1.6; margin-bottom: 16px; }
+        textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 16px; resize: vertical; }
+        textarea:focus { outline: none; border-color: #007AFF; }
+        select { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 16px; background: white; }
+        button { background: #007AFF; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; width: 100%; }
+        button:hover { background: #0056CC; }
+        button:disabled { background: #86868b; cursor: not-allowed; }
+        .result { background: #f5f5f7; border-radius: 8px; padding: 16px; margin-top: 16px; white-space: pre-wrap; line-height: 1.6; display: none; }
+        .section { margin-bottom: 40px; }
+        .section h2 { font-size: 1.8em; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 DreamSeed AI Tools</h1>
+            <p>DreamSeed 种梦计划参赛作品 — 轻量级 AI 工具集合</p>
+        </header>
+
+        <div class="section">
+            <h2>📝 智能文本优化</h2>
+            <div class="tool-card">
+                <select id="textMode">
+                    <option value="polish">✨ 润色文本</option>
+                    <option value="rewrite">🔄 改写文本</option>
+                    <option value="translate_en">🇬🇧 翻译成英文</option>
+                    <option value="translate_zh">🇨🇳 翻译成中文</option>
+                </select>
+                <textarea id="textInput" placeholder="输入要优化的文本..."></textarea>
+                <button onclick="optimizeText()" id="btnOptimize">开始优化</button>
+                <div class="result" id="textResult"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 AI 绘画提示词生成</h2>
+            <div class="tool-card">
+                <textarea id="promptDesc" placeholder="描述你想要的画面..."></textarea>
+                <select id="promptStyle">
+                    <option value="realistic">📷 写实风格</option>
+                    <option value="anime">🎌 动漫风格</option>
+                    <option value="oil_painting">🖼️ 油画风格</option>
+                    <option value="watercolor">🎨 水彩风格</option>
+                    <option value="3d_render">🎮 3D 渲染</option>
+                </select>
+                <button onclick="generatePrompt()" id="btnPrompt">生成提示词</button>
+                <div class="result" id="promptResult"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 代码片段生成</h2>
+            <div class="tool-card">
+                <textarea id="codeDesc" placeholder="描述你需要的功能..."></textarea>
+                <select id="codeLang">
+                    <option value="python">🐍 Python</option>
+                    <option value="javascript">📜 JavaScript</option>
+                    <option value="html">🌐 HTML/CSS</option>
+                    <option value="sql">🗃️ SQL</option>
+                </select>
+                <button onclick="generateCode()" id="btnCode">生成代码</button>
+                <div class="result" id="codeResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function callAPI(endpoint, data, resultId, btnId) {
+            const btn = document.getElementById(btnId);
+            const result = document.getElementById(resultId);
+            btn.disabled = true;
+            btn.textContent = '处理中...';
+            result.style.display = 'none';
+            
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const json = await resp.json();
+                result.textContent = json.result || json.error || '无结果';
+                result.style.display = 'block';
+            } catch (e) {
+                result.textContent = '请求失败: ' + e.message;
+                result.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = btnId === 'btnOptimize' ? '开始优化' : btnId === 'btnPrompt' ? '生成提示词' : '生成代码';
+            }
+        }
+
+        function optimizeText() {
+            callAPI('/api/optimize', {
+                text: document.getElementById('textInput').value,
+                mode: document.getElementById('textMode').value
+            }, 'textResult', 'btnOptimize');
+        }
+
+        function generatePrompt() {
+            callAPI('/api/prompt', {
+                description: document.getElementById('promptDesc').value,
+                style: document.getElementById('promptStyle').value
+            }, 'promptResult', 'btnPrompt');
+        }
+
+        function generateCode() {
+            callAPI('/api/code', {
+                description: document.getElementById('codeDesc').value,
+                language: document.getElementById('codeLang').value
+            }, 'codeResult', 'btnCode');
+        }
+    </script>
+</body>
+</html>
